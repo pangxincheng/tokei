@@ -271,63 +271,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let style = MenuBarStyle.current
         let density = MenuBarDensity.current
         var metrics: [MenuBarMetric] = []
-        var fallbackIcon = false
 
         if let u = store.usage {
+            // 菜单栏始终显示今日 token 消耗总量（按「显示卡片」勾选的工具求和），不再显示额度余量。
             let ud = UserDefaults.standard
-            // 菜单栏额度来源与「显示卡片」独立：卡片可开，但状态栏只显示用户勾选的来源。
-            if MenuBarQuotaSource.claude.isEnabled,
-               u.claude.q5_stale != true,
-               let q5 = u.claude.q5 {
-                let remaining = 100 - q5
-                metrics.append(.init(kind: .claude, value: String(format: "%.0f", remaining),
-                                     remaining: remaining))
-            }
-            if MenuBarQuotaSource.codex.isEnabled,
-               let quota = u.codex.pw {
-                let remaining = 100 - quota
-                metrics.append(.init(kind: .codex, value: String(format: "%.0f", remaining),
-                                     remaining: remaining))
-            }
-            if MenuBarQuotaSource.grok.isEnabled,
-               u.grok.stale != true,
-               let pct = u.grok.pct {
-                let remaining = 100 - pct
-                metrics.append(.init(kind: .grok, value: String(format: "%.0f", remaining),
-                                     remaining: remaining))
-            }
-            if metrics.isEmpty {
-                // 用户把额度来源全部关掉时：只保留图标，不再回退显示今日 token 总量。
-                let anyQuotaSourceOn = MenuBarQuotaSource.allCases.contains { $0.isEnabled }
-                if !anyQuotaSourceOn {
-                    fallbackIcon = true
-                } else {
-                    let showC = ud.object(forKey: "showClaude") as? Bool ?? true
-                    let showX = ud.object(forKey: "showCodex") as? Bool ?? true
-                    let showP = ud.object(forKey: "showPi") as? Bool ?? true
-                    let showW = ud.object(forKey: "showWorkBuddy") as? Bool ?? true
-                    let showO = ud.object(forKey: "showOpenCode") as? Bool ?? true
-                    let showQC = ud.object(forKey: "showQwenCode") as? Bool ?? true
-                    let showQ = ud.object(forKey: "showQoderIde") as? Bool ?? false
-                    let showZ = ud.object(forKey: "showZcode") as? Bool ?? true
-                    let showM = ud.object(forKey: "showMimoCode") as? Bool ?? true
-                    var total = 0
-                    if showC { let r = u.claude.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw) }
-                    if showX { let r = u.codex.ranges.get(.today); total += Int(r.in + r.out + r.cached) }
-                    if showP { let r = u.pi.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
-                    if showW { let r = u.workbuddy.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw) }
-                    if showO { let r = u.opencode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
-                    if showQC { let r = u.qwencode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.reason) }
-                    if showQ { let r = u.qoder.ranges.get(.today); total += Int(r.in + r.out + r.cached) }
-                    if showZ { let r = u.zcode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
-                    if showM { let r = u.mimocode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
-                    if total > 0 {
-                        metrics.append(.init(kind: .total, value: Fmt.human(total)))
-                    } else {
-                        fallbackIcon = true
-                    }
-                }
-            }
+            let showC = ud.object(forKey: "showClaude") as? Bool ?? true
+            let showX = ud.object(forKey: "showCodex") as? Bool ?? true
+            let showP = ud.object(forKey: "showPi") as? Bool ?? true
+            let showW = ud.object(forKey: "showWorkBuddy") as? Bool ?? true
+            let showO = ud.object(forKey: "showOpenCode") as? Bool ?? true
+            let showQC = ud.object(forKey: "showQwenCode") as? Bool ?? true
+            let showQ = ud.object(forKey: "showQoderIde") as? Bool ?? false
+            let showZ = ud.object(forKey: "showZcode") as? Bool ?? true
+            let showM = ud.object(forKey: "showMimoCode") as? Bool ?? true
+            var total = 0
+            if showC { let r = u.claude.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw) }
+            if showX { let r = u.codex.ranges.get(.today); total += Int(r.in + r.out + r.cached) }
+            if showP { let r = u.pi.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
+            if showW { let r = u.workbuddy.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw) }
+            if showO { let r = u.opencode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
+            if showQC { let r = u.qwencode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.reason) }
+            if showQ { let r = u.qoder.ranges.get(.today); total += Int(r.in + r.out + r.cached) }
+            if showZ { let r = u.zcode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
+            if showM { let r = u.mimocode.ranges.get(.today); total += Int(r.in + r.out + r.cr + r.cw + r.reason) }
+            metrics.append(.init(kind: .total, value: Fmt.human(total)))
         } else {
             metrics.append(.init(kind: .total, value: "…"))
         }
@@ -335,8 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             style: style,
             density: density,
             keepAwake: store.keepAwake.active,
-            metrics: metrics,
-            fallbackIcon: fallbackIcon
+            metrics: metrics
         )
         let displayedMetrics = MenuBarTitleRenderer.metricsForDisplay(metrics, density: density)
         b.image = presentation.image

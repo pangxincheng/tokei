@@ -46,10 +46,6 @@ struct PanelView: View {
     @AppStorage("showQwenCode") private var showQwenCode = true
     /// 默认关闭：Grok 额度只读本地日志；开启后才用登录凭据请求实时账单接口。
     @AppStorage("grokLiveQuotaEnabled") private var grokLiveQuotaEnabled = false
-    /// 菜单栏额度来源（与显示卡片独立）。Grok 默认关，避免新额度源抢占状态栏。
-    @AppStorage(MenuBarQuotaSource.claude.defaultsKey) private var menuBarQuotaClaude = true
-    @AppStorage(MenuBarQuotaSource.codex.defaultsKey) private var menuBarQuotaCodex = true
-    @AppStorage(MenuBarQuotaSource.grok.defaultsKey) private var menuBarQuotaGrok = false
 
     private var visibleCount: Int {
         [showClaude, showCodex, showGemini, showGrok, showQoder, showQoderWork, showQoderCli, showHermes, showZcode, showMimoCode,
@@ -1521,16 +1517,7 @@ struct PanelView: View {
                 .frame(width: settingsMenuPickerWidth)
             }
 
-            settingsStackedValue("额度来源") {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 7),
-                                    GridItem(.flexible(), spacing: 7)], spacing: 7) {
-                    settingsRow("Claude", tint: Theme.claude, isOn: $menuBarQuotaClaude)
-                    settingsRow("Codex", tint: Theme.codex, isOn: $menuBarQuotaCodex)
-                    settingsRow("Grok", tint: Theme.grok, isOn: $menuBarQuotaGrok)
-                }
-            }
-
-            Text("只影响状态栏剩余额度，与「显示卡片」无关。双额度最多显示前两项；单额度只显示一项。全部关闭时状态栏只留图标，不再显示用量数字。")
+            Text("状态栏始终显示今日 token 消耗总量（按「显示卡片」勾选的工具求和）。")
                 .font(.system(size: 8.5))
                 .foregroundStyle(Theme.tTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1548,15 +1535,6 @@ struct PanelView: View {
             (NSApp.delegate as? AppDelegate)?.updateStatusTitle()
         }
         .onChange(of: menuBarDensity) { _ in
-            (NSApp.delegate as? AppDelegate)?.updateStatusTitle()
-        }
-        .onChange(of: menuBarQuotaClaude) { _ in
-            (NSApp.delegate as? AppDelegate)?.updateStatusTitle()
-        }
-        .onChange(of: menuBarQuotaCodex) { _ in
-            (NSApp.delegate as? AppDelegate)?.updateStatusTitle()
-        }
-        .onChange(of: menuBarQuotaGrok) { _ in
             (NSApp.delegate as? AppDelegate)?.updateStatusTitle()
         }
     }
